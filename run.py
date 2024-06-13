@@ -1,9 +1,7 @@
 from matplotlib import pyplot as plt
-import numpy as np
-from keras.datasets import imdb
-from keras.models import Sequential
-from keras.layers import Dense, Embedding, Conv1D, GlobalMaxPooling1D
-from keras.utils import pad_sequences
+from keras.datasets import imdb # type: ignore
+from keras.models import Sequential # type: ignore
+from keras.layers import Dense, Embedding, Conv1D, GlobalMaxPooling1D # type: ignore
 import utils
 
 max_features = 20000
