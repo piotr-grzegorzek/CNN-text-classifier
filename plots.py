@@ -14,8 +14,8 @@ def create_histogram(data, color, label, subplot_position):
     plt.legend()
 
 
-limit = 1000
-step = 1
+limit = 1150
+step = 100
 
 # Filter the reviews based on limit
 train_lengths = [
@@ -44,7 +44,7 @@ diff_hist = train_hist - test_hist
 
 plt.subplot(1, 3, 3)
 plt.bar(
-    bin_edges[:-1], diff_hist, width=1, color="purple", alpha=0.7, label="Difference"
+    bin_edges[:-1], diff_hist, width=step, color="purple", alpha=0.7, label="Difference"
 )
 plt.title("Difference Histogram")
 plt.xlabel("Words count")
