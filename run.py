@@ -1,16 +1,14 @@
 import matplotlib.pyplot as plt
 from keras.datasets import imdb  # type: ignore
 from keras.models import Sequential  # type: ignore
-from keras.layers import Dense, Embedding, Conv1D, GlobalMaxPooling1D  # type: ignore
+from keras.layers import Dense, Embedding, Conv1D, GlobalMaxPooling1D, Dropout  # type: ignore
 from keras.preprocessing.sequence import pad_sequences  # type: ignore
 from keras_tuner import HyperModel, RandomSearch
 from keras.optimizers import Adam, RMSprop, SGD  # type: ignore
 import numpy as np
 
-
 max_features = 20000
 max_len = 2000
-
 
 (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=max_features)
 
@@ -31,7 +29,7 @@ if __name__ == "__main__":
                 )
             )
 
-            # Conv1D layers
+            # Conv1D layers with dropout
             for i in range(hp.Int("num_conv_layers", 1, 3)):
                 model.add(
                     Conv1D(
@@ -42,14 +40,28 @@ if __name__ == "__main__":
                         activation="relu",
                     )
                 )
+                model.add(
+                    Dropout(
+                        rate=hp.Float(
+                            f"dropout_{i}", min_value=0.1, max_value=0.5, step=0.1
+                        )
+                    )
+                )
 
             model.add(GlobalMaxPooling1D())
 
-            # Dense layer
+            # Dense layer with dropout
             model.add(
                 Dense(
                     units=hp.Int("hidden_units", min_value=32, max_value=128, step=32),
                     activation="relu",
+                )
+            )
+            model.add(
+                Dropout(
+                    rate=hp.Float(
+                        "dropout_dense", min_value=0.1, max_value=0.5, step=0.1
+                    )
                 )
             )
             model.add(Dense(units=1, activation="sigmoid"))
@@ -111,6 +123,7 @@ if __name__ == "__main__":
         validation_data=(x_test_padded, y_test),
     )
 
+    # Plot the training history
     plt.figure(figsize=(12, 4))
     plt.subplot(1, 2, 1)
     plt.plot(history.history["accuracy"])
@@ -131,8 +144,10 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.show()
 
+    # Evaluate the model
     score = model.evaluate(x_test_padded, y_test)
     print("Test loss:", score[0])
     print("Test accuracy:", score[1])
 
+    # Save the model
     model.save("model.keras")
