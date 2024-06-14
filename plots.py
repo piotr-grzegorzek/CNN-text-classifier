@@ -14,8 +14,8 @@ def create_histogram(data, color, label, subplot_position):
     plt.legend()
 
 
-limit = 1150
-step = 100
+limit = None
+step = 10
 
 # Filter the reviews based on limit
 train_lengths = [
