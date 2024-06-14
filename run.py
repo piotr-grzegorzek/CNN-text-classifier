@@ -1,11 +1,9 @@
-import matplotlib.pyplot as plt
 from keras.datasets import imdb  # type: ignore
 from keras.models import Sequential  # type: ignore
 from keras.layers import Dense, Embedding, Conv1D, GlobalMaxPooling1D, Dropout  # type: ignore
 from keras.preprocessing.sequence import pad_sequences  # type: ignore
 from keras_tuner import HyperModel, RandomSearch
 from keras.optimizers import Adam, RMSprop, SGD  # type: ignore
-import numpy as np
 
 max_features = 20000
 max_len = 2000
@@ -101,53 +99,15 @@ if __name__ == "__main__":
         x_train_padded,
         y_train,
         epochs=10,
+        batch_size=32,
         validation_data=(x_test_padded, y_test),
         callbacks=[],
     )
 
-    best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
+    best_model = tuner.get_best_models(num_models=1)[0]
 
-    x_train_padded = np.array(x_train_padded)
-    x_test_padded = np.array(x_test_padded)
-    y_train = np.array(y_train)
-    y_test = np.array(y_test)
-
-    model = tuner.hypermodel.build(best_hps)
-
-    # Train the model
-    history = model.fit(
-        x_train_padded,
-        y_train,
-        epochs=best_hps.get("epochs", 10),
-        batch_size=best_hps.get("batch_size", 32),
-        validation_data=(x_test_padded, y_test),
-    )
-
-    # Plot the training history
-    plt.figure(figsize=(12, 4))
-    plt.subplot(1, 2, 1)
-    plt.plot(history.history["accuracy"])
-    plt.plot(history.history["val_accuracy"])
-    plt.title("Model accuracy")
-    plt.ylabel("Accuracy")
-    plt.xlabel("Epoch")
-    plt.legend(["Train", "Test"], loc="upper left")
-
-    plt.subplot(1, 2, 2)
-    plt.plot(history.history["loss"])
-    plt.plot(history.history["val_loss"])
-    plt.title("Model loss")
-    plt.ylabel("Loss")
-    plt.xlabel("Epoch")
-    plt.legend(["Train", "Test"], loc="upper left")
-
-    plt.tight_layout()
-    plt.show()
-
-    # Evaluate the model
-    score = model.evaluate(x_test_padded, y_test)
+    score = best_model.evaluate(x_test_padded, y_test)
     print("Test loss:", score[0])
     print("Test accuracy:", score[1])
 
-    # Save the model
-    model.save("model.keras")
+    best_model.save("model.keras")
