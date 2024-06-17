@@ -6,7 +6,7 @@ data = pd.read_csv(
 )
 
 data.columns = ["Category", "Title", "Description"]
-category_map = {0: "World", 1: "Sport", 2: "Business", 3: "Tech"}
+category_map = {1: "World", 2: "Sport", 3: "Business", 4: "Tech"}
 
 for i in range(500, 505):
     print(

@@ -3,10 +3,18 @@ import numpy as np
 from keras.models import load_model  # type: ignore
 from keras.preprocessing.text import Tokenizer  # type: ignore
 from keras.preprocessing.sequence import pad_sequences  # type: ignore
+from sklearn.model_selection import train_test_split  # type: ignore
 
-data = pd.read_csv("path_to_AG_News_data.csv")
-data["text"] = data["Title"] + " " + data["Description"]
-x_data = data["text"]
+max_features = 20000
+max_len = 100
+
+data = pd.read_csv(
+    "https://raw.githubusercontent.com/mhjabreel/CharCnn_Keras/master/data/ag_news_csv/train.csv",
+    header=None,
+)
+data.columns = ["Category", "Title", "Description"]
+data["Text"] = data["Title"] + " " + data["Description"]
+x_data = data["Text"]
 y_data = data["Category"] - 1  # Adjust categories to be 0-based
 
 tokenizer = Tokenizer(num_words=max_features)
@@ -18,7 +26,7 @@ x_train, x_test, y_train, y_test = train_test_split(
     x_data_padded, y_data, test_size=0.2, random_state=42
 )
 
-model = load_model("ag_news_model.keras")
+model = load_model("model.keras")
 
 score = model.evaluate(x_test, y_test)
 print("Test loss:", score[0])
@@ -36,6 +44,6 @@ print(
 for i in wrong_predictions[:5]:
     print(f"Review number {i}")
     print(f"Actual label: {y_test.iloc[i]}")
-    print(f"Review text: {data['text'].iloc[i]}")
+    print(f"Review text: {data['Text'].iloc[i]}")
     print(f"Predicted label: {predictions[i]}")
     print("\n")

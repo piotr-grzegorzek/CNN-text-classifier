@@ -10,34 +10,49 @@ from keras.layers import (  # type: ignore
 )
 from keras.optimizers import Adam  # type: ignore
 from keras._tf_keras.keras.preprocessing.text import Tokenizer  # type: ignore
-from keras.src.utils import pad_sequences  # type: ignore
+from keras.preprocessing.sequence import pad_sequences  # type: ignore
 from keras.callbacks import EarlyStopping  # type: ignore
 from keras_tuner import HyperModel
 from keras_tuner.tuners import Hyperband
-from sklearn.model_selection import train_test_split  # type: ignore
 import matplotlib.pyplot as plt  # type: ignore
+from sklearn.model_selection import train_test_split  # type: ignore
 
 max_features = 20000
-max_len = 100
+max_len = 200
 batch_size = 32
-epochs = 10
+epochs = 100
 
-data = pd.read_csv(
+# Load training data
+train_data = pd.read_csv(
     "https://raw.githubusercontent.com/mhjabreel/CharCnn_Keras/master/data/ag_news_csv/train.csv",
     header=None,
 )
-data.columns = ["Category", "Title", "Description"]
-data["Text"] = data["Title"] + " " + data["Description"]
-x_data = data["Text"].astype(str)
-y_data = data["Category"] - 1
+train_data.columns = ["Category", "Title", "Description"]
+train_data["Text"] = train_data["Title"] + " " + train_data["Description"]
+x_train_data = train_data["Text"].astype(str)
+y_train_data = train_data["Category"] - 1
 
+# Load testing data
+test_data = pd.read_csv(
+    "https://raw.githubusercontent.com/mhjabreel/CharCnn_Keras/master/data/ag_news_csv/test.csv",
+    header=None,
+)
+test_data.columns = ["Category", "Title", "Description"]
+test_data["Text"] = test_data["Title"] + " " + test_data["Description"]
+x_test_data = test_data["Text"].astype(str)
+y_test_data = test_data["Category"] - 1
+
+# Tokenize and pad sequences
 tokenizer = Tokenizer(num_words=max_features)
-tokenizer.fit_on_texts(x_data)
-x_data_seq = tokenizer.texts_to_sequences(x_data)
-x_data_padded = pad_sequences(x_data_seq, maxlen=max_len)
+tokenizer.fit_on_texts(x_train_data)
+x_train_seq = tokenizer.texts_to_sequences(x_train_data)
+x_train_padded = pad_sequences(x_train_seq, maxlen=max_len)
+x_test_seq = tokenizer.texts_to_sequences(x_test_data)
+x_test_padded = pad_sequences(x_test_seq, maxlen=max_len)
 
-x_train, x_test, y_train, y_test = train_test_split(
-    x_data_padded, y_data, test_size=0.2, random_state=42
+# Create validation set from training set
+x_train, x_val, y_train, y_val = train_test_split(
+    x_train_padded, y_train_data, test_size=0.2
 )
 
 if __name__ == "__main__":
@@ -114,7 +129,7 @@ if __name__ == "__main__":
     tuner = Hyperband(
         hypermodel,
         objective="val_accuracy",
-        max_epochs=10,
+        max_epochs=epochs,
         hyperband_iterations=2,
         directory="hyperband",
         project_name="ag_news",
@@ -128,7 +143,7 @@ if __name__ == "__main__":
         x_train,
         y_train,
         epochs=epochs,
-        validation_data=(x_test, y_test),
+        validation_data=(x_val, y_val),
         batch_size=batch_size,
         callbacks=[early_stopping],
     )
@@ -142,15 +157,16 @@ if __name__ == "__main__":
         y_train,
         epochs=epochs,
         batch_size=batch_size,
-        validation_data=(x_test, y_test),
+        validation_data=(x_val, y_val),
         callbacks=[early_stopping],
     )
 
-    score = model.evaluate(x_test, y_test)
+    score = model.evaluate(x_test_padded, y_test_data)
     print("Test loss:", score[0])
     print("Test accuracy:", score[1])
 
     model.save("model.keras")
+    print(model.summary())
 
     # Plot training & validation accuracy values
     plt.figure(figsize=(12, 6))
