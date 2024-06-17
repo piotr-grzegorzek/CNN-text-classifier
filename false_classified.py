@@ -7,6 +7,10 @@ x_train, x_test = utils.pad_sequences(x_train, x_test, maxlen)
 
 model = keras.models.load_model("model.keras")
 
+score = model.evaluate(x_test, y_test)
+print("Test loss:", score[0])
+print("Test accuracy:", score[1])
+
 predictions = model.predict(x_test)
 
 predictions = [type(y)(p) for p, y in zip(predictions.flatten(), y_test)]
