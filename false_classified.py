@@ -1,11 +1,12 @@
 import keras
 import numpy as np
-from run import x_train, x_test, y_test, maxlen, imdb
+from run import x_train, x_test, y_test, max_len, imdb
 import utils
 
-x_train, x_test = utils.pad_sequences(x_train, x_test, maxlen)
+x_train, x_test = utils.pad_sequences(x_train, x_test, max_len)
 
 model = keras.models.load_model("model.keras")
+print(model.summary())
 
 score = model.evaluate(x_test, y_test)
 print("Test loss:", score[0])
