@@ -1,43 +1,53 @@
-from run import x_train, x_test
+import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
+data = pd.read_csv("path_to_AG_News_data.csv")
+data["text"] = data["Title"] + " " + data["Description"]
+x_data = data["text"]
 
-def create_histogram(data, color, label, subplot_position):
-    plt.subplot(1, 3, subplot_position)
-    plt.hist(
-        data, bins=range(1, maxWords + 2, step), color=color, alpha=0.7, label=label
-    )
-    plt.title(f"{label} Histogram")
-    plt.xlabel("Words count")
-    plt.ylabel("Reviews count")
-    plt.legend()
+tokenizer = Tokenizer(num_words=max_features)
+tokenizer.fit_on_texts(x_data)
+x_data_seq = tokenizer.texts_to_sequences(x_data)
+x_data_padded = pad_sequences(x_data_seq, maxlen=max_len)
 
+x_train, x_test, y_train, y_test = train_test_split(
+    x_data_padded, data["Category"], test_size=0.2, random_state=42
+)
 
-limit = None
-step = 10
-
-# Filter the reviews based on limit
-train_lengths = [
-    len(review) for review in x_train if limit is None or len(review) <= limit
-]
-test_lengths = [
-    len(review) for review in x_test if limit is None or len(review) <= limit
-]
+train_lengths = [len(seq) for seq in x_train]
+test_lengths = [len(seq) for seq in x_test]
 
 maxWords = max(max(train_lengths), max(test_lengths))
+step = 10
 
-# Create a figure with 3 subplots
 plt.figure(figsize=(18, 6))
+plt.subplot(1, 3, 1)
+plt.hist(
+    train_lengths,
+    bins=range(1, maxWords + 2, step),
+    color="blue",
+    alpha=0.7,
+    label="Training Reviews",
+)
+plt.title("Training Reviews Histogram")
+plt.xlabel("Words count")
+plt.ylabel("Reviews count")
+plt.legend()
 
-# First subplot: Training Reviews Histogram
-create_histogram(train_lengths, "blue", "Training Reviews", 1)
+plt.subplot(1, 3, 2)
+plt.hist(
+    test_lengths,
+    bins=range(1, maxWords + 2, step),
+    color="green",
+    alpha=0.7,
+    label="Testing Reviews",
+)
+plt.title("Testing Reviews Histogram")
+plt.xlabel("Words count")
+plt.ylabel("Reviews count")
+plt.legend()
 
-# Second subplot: Testing Reviews Histogram
-create_histogram(test_lengths, "green", "Testing Reviews", 2)
-
-# Third subplot: Difference Histogram
-# Calculate the difference in counts using histograms directly
 train_hist, bin_edges = np.histogram(train_lengths, bins=range(1, maxWords + 2, step))
 test_hist, _ = np.histogram(test_lengths, bins=range(1, maxWords + 2, step))
 diff_hist = train_hist - test_hist

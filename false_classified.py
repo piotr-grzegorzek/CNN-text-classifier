@@ -1,39 +1,41 @@
-import keras
+import pandas as pd
 import numpy as np
-from run import x_train, x_test, y_test, maxlen, imdb
-import utils
+from keras.models import load_model  # type: ignore
+from keras.preprocessing.text import Tokenizer  # type: ignore
+from keras.preprocessing.sequence import pad_sequences  # type: ignore
 
-x_train, x_test = utils.pad_sequences(x_train, x_test, maxlen)
+data = pd.read_csv("path_to_AG_News_data.csv")
+data["text"] = data["Title"] + " " + data["Description"]
+x_data = data["text"]
+y_data = data["Category"] - 1  # Adjust categories to be 0-based
 
-model = keras.models.load_model("model.keras")
+tokenizer = Tokenizer(num_words=max_features)
+tokenizer.fit_on_texts(x_data)
+x_data_seq = tokenizer.texts_to_sequences(x_data)
+x_data_padded = pad_sequences(x_data_seq, maxlen=max_len)
+
+x_train, x_test, y_train, y_test = train_test_split(
+    x_data_padded, y_data, test_size=0.2, random_state=42
+)
+
+model = load_model("ag_news_model.keras")
 
 score = model.evaluate(x_test, y_test)
 print("Test loss:", score[0])
 print("Test accuracy:", score[1])
 
 predictions = model.predict(x_test)
-
-predictions = [type(y)(p) for p, y in zip(predictions.flatten(), y_test)]
-
-assert all(isinstance(p, type(y)) for p, y in zip(predictions, y_test))
+predictions = np.argmax(predictions, axis=1)
 
 wrong_predictions = np.where(predictions != y_test)[0]
 
-word_index = imdb.get_word_index()
+print(
+    f"The percentage of wrong predictions is {(len(wrong_predictions) / len(predictions)) * 100}%"
+)
 
-reverse_word_index = dict([(value, key) for (key, value) in word_index.items()])
-
-
-def decode_review(text):
-    return " ".join([reverse_word_index.get(i, "?") for i in text])
-
-
-percentage_wrong = (len(wrong_predictions) / len(predictions)) * 100
-print(f"The percentage of wrong predictions is {percentage_wrong}%")
-
-for i in wrong_predictions[10:15]:
+for i in wrong_predictions[:5]:
     print(f"Review number {i}")
-    print(f"Actual label: {y_test[i]}")
-    print(f"Review text: {decode_review(x_test[i])}")
+    print(f"Actual label: {y_test.iloc[i]}")
+    print(f"Review text: {data['text'].iloc[i]}")
     print(f"Predicted label: {predictions[i]}")
     print("\n")

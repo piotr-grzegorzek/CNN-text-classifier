@@ -1,18 +1,15 @@
-from run import imdb, x_train
+import pandas as pd  # type: ignore
 
-# Get the word index from the imdb dataset
-word_index = imdb.get_word_index()
+data = pd.read_csv(
+    "https://raw.githubusercontent.com/mhjabreel/CharCnn_Keras/master/data/ag_news_csv/train.csv",
+    header=None,
+)
 
-# Create a new dictionary where the keys are the indices and the values are the words
-reverse_word_index = dict([(value, key) for (key, value) in word_index.items()])
+data.columns = ["Category", "Title", "Description"]
+category_map = {0: "World", 1: "Sport", 2: "Business", 3: "Tech"}
 
-
-# Function to decode reviews
-def decode_review(text):
-    return " ".join([reverse_word_index.get(i, "?") for i in text])
-
-
-# Display an example review
-for i in range(5):
-    print(decode_review(x_train[i]))
+for i in range(500, 505):
+    print(
+        f"Category: {category_map[data['Category'][i]]}, Title: {data['Title'][i]}, Description: {data['Description'][i]}"
+    )
     print()
