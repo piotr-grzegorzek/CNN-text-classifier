@@ -20,7 +20,7 @@ from sklearn.model_selection import train_test_split  # type: ignore
 max_features = 20000
 max_len = 200
 batch_size = 32
-epochs = 100
+epochs = 10
 
 # Load training data
 train_data = pd.read_csv(
@@ -96,6 +96,13 @@ if __name__ == "__main__":
                 )
             model.add(GlobalMaxPooling1D())
             model.add(
+                Dropout(
+                    hp.Float(
+                        "dropout_rate_pool", min_value=0.1, max_value=0.5, step=0.1
+                    )
+                )
+            )
+            model.add(
                 Dense(
                     units=hp.Int("hidden_units", min_value=32, max_value=256, step=32),
                     activation="relu",
@@ -131,12 +138,12 @@ if __name__ == "__main__":
         objective="val_accuracy",
         max_epochs=epochs,
         hyperband_iterations=2,
-        directory="hyperband",
+        directory="hyperband2",
         project_name="ag_news",
     )
 
     early_stopping = EarlyStopping(
-        monitor="val_loss", patience=3, restore_best_weights=True
+        monitor="val_accuracy", patience=3, restore_best_weights=True
     )
 
     tuner.search(
