@@ -10,7 +10,8 @@ from keras.layers import (  # type: ignore
 )
 from keras.optimizers import Adam  # type: ignore
 from keras.preprocessing.sequence import pad_sequences  # type: ignore
-from keras.callbacks import EarlyStopping  # type: ignore
+from keras.callbacks import ModelCheckpoint, EarlyStopping  # type: ignore
+import matplotlib.pyplot as plt  # type: ignore
 from keras_tuner import HyperModel
 from keras_tuner.tuners import Hyperband
 
@@ -103,6 +104,10 @@ if __name__ == "__main__":
         project_name="imdb_reviews",
     )
 
+    checkpoint = ModelCheckpoint(
+        "model.keras", monitor="val_loss", verbose=1, save_best_only=True, mode="min"
+    )
+
     early_stopping = EarlyStopping(
         monitor="val_loss", patience=3, restore_best_weights=True
     )
@@ -126,11 +131,28 @@ if __name__ == "__main__":
         epochs=epochs,
         batch_size=batch_size,
         validation_data=(x_test_padded, y_test),
-        callbacks=[early_stopping],
+        callbacks=[early_stopping, checkpoint],
     )
 
     score = model.evaluate(x_test_padded, y_test)
     print("Test loss:", score[0])
     print("Test accuracy:", score[1])
+    # Plot training & validation accuracy values
+    plt.figure(figsize=(12, 6))
+    plt.subplot(1, 2, 1)
+    plt.plot(history.history["accuracy"])
+    plt.plot(history.history["val_accuracy"])
+    plt.title("Model accuracy")
+    plt.ylabel("Accuracy")
+    plt.xlabel("Epoch")
+    plt.legend(["Train", "Validation"], loc="upper left")
 
-    model.save("model.keras")
+    # Plot training & validation loss values
+    plt.subplot(1, 2, 2)
+    plt.plot(history.history["loss"])
+    plt.plot(history.history["val_loss"])
+    plt.title("Model loss")
+    plt.ylabel("Loss")
+    plt.xlabel("Epoch")
+    plt.legend(["Train", "Validation"], loc="upper left")
+    plt.show()
